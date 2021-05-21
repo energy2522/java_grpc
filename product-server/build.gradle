@@ -1,0 +1,61 @@
+plugins {
+    id "java"
+    // protobuf plugin for gradle
+    id "com.google.protobuf" version "0.8.14"
+    id "application"
+}
+
+repositories {
+    mavenCentral()
+}
+
+def grpcVersion = "1.32.1"
+def protobufVersion = "3.12.0"
+def protocVersion = protobufVersion
+
+dependencies {
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    // for java 9+
+    compileOnly "javax.annotation:javax.annotation-api:1.3.2"
+
+    implementation "com.google.api.grpc:proto-google-common-protos:2.0.0"
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protocVersion}"
+    }
+    plugins {
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"}
+    }
+    generateProtoTasks{
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+// for IDEA
+sourceSets {
+    main {
+        proto {
+
+        }
+        java {
+            srcDirs "build/generated/source/proto/main/grpc"
+            srcDirs "build/generated/source/proto/main/java"
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "ecommerce.ProductInfoServer"
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+startScripts.enabled = false
